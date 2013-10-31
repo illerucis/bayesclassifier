@@ -8,7 +8,6 @@ struct bclassifier {
 
     double *tdata;
     double *stats;
-
 };
 
 struct bclassifier *getclassifier(double tdata[], int ngroups, int nvars, int nsamples)
@@ -118,9 +117,4 @@ int classify(struct bclassifier *b, double input[])
 
     return gmax;
 
-}
-
-int main() 
-{
-    return 1;
 }
