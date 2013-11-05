@@ -169,18 +169,16 @@ void train(struct bclassifier *b, char filename[])
 int classify(struct bclassifier *b, double input[])
 {
 
-    double cp, prob;
-    int start;
+    double cp, prob; int start;
 
-    double cpmax = 0.0;
-    int gmax = -1; 
+    double cpmax = 0.0; int gmax = -1; 
 
     double *stats = b->stats;
     double *probexisting = b->probexisting;
+
     int nvars = b->nvars;
     int ngroups = b->ngroups;
 
-    // find the greatest numerator
     for (int g = 0; g < ngroups; g++) {
 	cp = probexisting[g];
 
