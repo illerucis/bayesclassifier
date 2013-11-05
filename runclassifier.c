@@ -11,7 +11,8 @@ int main()
 
     double test[] = {6.0, 130.0, 8.0};
     printf("%d\n", classify(b, test));
-    
+
+    destroyclassifier(b);
     return 1;
 }
 

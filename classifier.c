@@ -94,6 +94,7 @@ void buildgroups(struct bclassifier *b, char filename[])
 	coln = 0;
 	linen++;
     }
+    free (csamps);
 
 }
 
@@ -101,6 +102,14 @@ struct bclassifier *getclassifier()
 {
     struct bclassifier *b = malloc(sizeof(struct bclassifier));
     return b;
+}
+
+void destroyclassifier(struct bclassifier *b)
+{
+    free (b->tdata);
+    free (b->stats);
+    free (b->probexisting);
+    free (b);
 }
 
 double getmean(double stats[], int start, int nsamples)
@@ -183,6 +192,5 @@ int classify(struct bclassifier *b, double input[])
     	if (cp > cpmax)
     	    cpmax = cp; gmax = g;
     }
-
     return gmax;
 }
