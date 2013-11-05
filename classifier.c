@@ -16,7 +16,7 @@ struct bclassifier {
 };
 
 void buildinfrastructure(struct bclassifier *b, int ngroups, 
-			 int nvars, int nsamples)
+                         int nvars, int nsamples)
 {
 
     double *tdata; double *stats; double *probexisting;
@@ -24,7 +24,7 @@ void buildinfrastructure(struct bclassifier *b, int ngroups,
     b->ngroups = ngroups;
     b->nvars = nvars;
     b->nsamples = nsamples;
-	    
+            
     probexisting = malloc(ngroups*sizeof(double));
     tdata = malloc(ngroups*nvars*nsamples*(sizeof(double)));
     stats = malloc(ngroups*nsamples*2*(sizeof(double)));
@@ -51,38 +51,38 @@ void buildgroups(struct bclassifier *b, char filename[])
     fp = fopen(filename, "r");
     while (fgets(line, sizeof(line), fp)) {
 
-	pch = strtok(line, ",");
-	while (pch != NULL) {
+        pch = strtok(line, ",");
+        while (pch != NULL) {
 
-	    if (linen == 0) {
-		if (coln == 0) ngroups = atoi(pch);
-		else if (coln == 1) nvars = atoi(pch);
-		else nsamples = atoi(pch);
-	    }
-	    else {
-		if (coln == 0) cgroup = atoi(pch);
-		else if (coln == nvars + 1) probexisting[cgroup] = atof(pch);
-		else {
-		    ti = cgroup*nvars*nsamples + (coln - 1)*nsamples + csamps[cgroup];
-		    tdata[ti] = atof(pch);
-		}
-	    }
-	    coln++;
-	    pch = strtok(NULL, ",");
-	}
+            if (linen == 0) {
+                if (coln == 0) ngroups = atoi(pch);
+                else if (coln == 1) nvars = atoi(pch);
+                else nsamples = atoi(pch);
+            }
+            else {
+                if (coln == 0) cgroup = atoi(pch);
+                else if (coln == nvars + 1) probexisting[cgroup] = atof(pch);
+                else {
+                    ti = cgroup*nvars*nsamples + (coln - 1)*nsamples + csamps[cgroup];
+                    tdata[ti] = atof(pch);
+                }
+            }
+            coln++;
+            pch = strtok(NULL, ",");
+        }
 
-	if (linen == 0) {
-	    csamps = malloc(ngroups*sizeof(int));
-	    for (int i = 0; i < ngroups; i++) csamps[i] = 0;
+        if (linen == 0) {
+            csamps = malloc(ngroups*sizeof(int));
+            for (int i = 0; i < ngroups; i++) csamps[i] = 0;
 
-	    buildinfrastructure(b, ngroups, nvars, nsamples);
-	    tdata = b->tdata;
-	    probexisting = b->probexisting;
-	}
-	else csamps[cgroup] = csamps[cgroup] + 1;
+            buildinfrastructure(b, ngroups, nvars, nsamples);
+            tdata = b->tdata;
+            probexisting = b->probexisting;
+        }
+        else csamps[cgroup] = csamps[cgroup] + 1;
 
-	coln = 0;
-	linen++;
+        coln = 0;
+        linen++;
     }
     free (csamps);
 }
@@ -105,7 +105,7 @@ double getmean(double stats[], int start, int nsamples)
 {
     double sum = 0.0;
     for (int i = start; i < start + nsamples; i++)
-	sum += stats[i];
+        sum += stats[i];
     return sum / nsamples;
 }
 
@@ -114,7 +114,7 @@ double getvariance(double stats[], int start, int nsamples)
     double var = 0.0;
     double mean = getmean(stats, start, nsamples);
     for (int i = start; i < start + nsamples; i++) 
-	var += (stats[i] - mean) * (stats[i] - mean);
+        var += (stats[i] - mean) * (stats[i] - mean);
     return ( 1 / ( nsamples - 1.0 ) ) * var; 
 }
 
@@ -140,17 +140,17 @@ void train(struct bclassifier *b, char filename[])
 
     for (int g = 0; g < ngroups; g++) {
 
-    	for (int v = 0; v < nvars; v++) {
-	    
-	    start = g*nvars*nsamples + v*nsamples;
+        for (int v = 0; v < nvars; v++) {
+            
+            start = g*nvars*nsamples + v*nsamples;
 
-    	    double mean = getmean(tdata, start, nsamples);
-	    double var = getvariance(tdata, start, nsamples);
+            double mean = getmean(tdata, start, nsamples);
+            double var = getvariance(tdata, start, nsamples);
 
-    	    stats[g*nvars*2 + v*2] = mean; 
-    	    stats[g*nvars*2 + v*2 + 1] = var; 
+            stats[g*nvars*2 + v*2] = mean; 
+            stats[g*nvars*2 + v*2 + 1] = var; 
 
-    	}
+        }
     }
     b->stats = stats;
 }
@@ -169,15 +169,15 @@ int classify(struct bclassifier *b, double input[])
     int ngroups = b->ngroups;
 
     for (int g = 0; g < ngroups; g++) {
-	cp = probexisting[g];
+        cp = probexisting[g];
 
-    	for (int v = 0; v < nvars; v++) {
-	    start = g*nvars*2 + v*2;
-    	    cp = cp*getprob(stats[start], stats[start + 1], input[v]);
-	}
+        for (int v = 0; v < nvars; v++) {
+            start = g*nvars*2 + v*2;
+            cp = cp*getprob(stats[start], stats[start + 1], input[v]);
+        }
 
-    	if (cp > cpmax)
-    	    cpmax = cp; gmax = g;
+        if (cp > cpmax)
+            cpmax = cp; gmax = g;
     }
     return gmax;
 }
