@@ -52,23 +52,16 @@ void buildgroups(struct bclassifier *b, char filename[])
     while (fgets(line, sizeof(line), fp)) {
 
 	pch = strtok(line, ",");
-
 	while (pch != NULL) {
 
 	    if (linen == 0) {
-		if (coln == 0) 
-		    ngroups = atoi(pch);
-		else if (coln == 1) 
-		    nvars = atoi(pch);
-		else 
-		    nsamples = atoi(pch);
+		if (coln == 0) ngroups = atoi(pch);
+		else if (coln == 1) nvars = atoi(pch);
+		else nsamples = atoi(pch);
 	    }
-
 	    else {
-		if (coln == 0) 
-		    cgroup = atoi(pch);
-		else if (coln == nvars + 1)
-		    probexisting[cgroup] = atof(pch);
+		if (coln == 0) cgroup = atoi(pch);
+		else if (coln == nvars + 1) probexisting[cgroup] = atof(pch);
 		else {
 		    ti = cgroup*nvars*nsamples + (coln - 1)*nsamples + csamps[cgroup];
 		    tdata[ti] = atof(pch);
@@ -77,25 +70,21 @@ void buildgroups(struct bclassifier *b, char filename[])
 	    coln++;
 	    pch = strtok(NULL, ",");
 	}
+
 	if (linen == 0) {
 	    csamps = malloc(ngroups*sizeof(int));
-	    for (int i = 0; i < ngroups; i++)
-		csamps[i] = 0;
+	    for (int i = 0; i < ngroups; i++) csamps[i] = 0;
 
 	    buildinfrastructure(b, ngroups, nvars, nsamples);
-
 	    tdata = b->tdata;
 	    probexisting = b->probexisting;
 	}
-	else {
-	    csamps[cgroup] = csamps[cgroup] + 1;
-	}
+	else csamps[cgroup] = csamps[cgroup] + 1;
 
 	coln = 0;
 	linen++;
     }
     free (csamps);
-
 }
 
 struct bclassifier *getclassifier()
