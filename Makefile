@@ -1,4 +1,4 @@
 all:
-	gcc -c runclassifier.c -o runclassifier.o 
-	gcc -c classifier.c -o classifier.o -lm
-	gcc runclassifier.o classifier.o -o runclassifier 
+	c99 -c runclassifier.c -o runclassifier.o
+	c99 -c classifier.c -o classifier.o
+	c99 runclassifier.o classifier.o -o runclassifier -lm
