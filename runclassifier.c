@@ -13,6 +13,7 @@ int main()
     printf("%d\n", classify(b, test));
 
     destroyclassifier(b);
+    
     return 1;
 }
 

@@ -38,7 +38,7 @@ void buildinfrastructure(struct bclassifier *b, int ngroups,
 void buildgroups(struct bclassifier *b, char filename[])
 {
 
-    int ngroups, nvars, nsamples, cgroup, csamp, ti;
+    int ngroups, nvars, nsamples, cgroup, csamp, ti, i;
     char line[256]; 
     int *csamps;
 
@@ -73,7 +73,7 @@ void buildgroups(struct bclassifier *b, char filename[])
 
         if (linen == 0) {
             csamps = malloc(ngroups*sizeof(int));
-            for (int i = 0; i < ngroups; i++) csamps[i] = 0;
+            for (i = 0; i < ngroups; i++) csamps[i] = 0;
 
             buildinfrastructure(b, ngroups, nvars, nsamples);
             tdata = b->tdata;
@@ -104,7 +104,8 @@ void destroyclassifier(struct bclassifier *b)
 double getmean(double stats[], int start, int nsamples)
 {
     double sum = 0.0;
-    for (int i = start; i < start + nsamples; i++)
+    int i;
+    for (i = start; i < start + nsamples; i++)
         sum += stats[i];
     return sum / nsamples;
 }
@@ -113,7 +114,8 @@ double getvariance(double stats[], int start, int nsamples)
 {
     double var = 0.0;
     double mean = getmean(stats, start, nsamples);
-    for (int i = start; i < start + nsamples; i++) 
+    int i;
+    for (i = start; i < start + nsamples; i++) 
         var += (stats[i] - mean) * (stats[i] - mean);
     return ( 1 / ( nsamples - 1.0 ) ) * var; 
 }
@@ -137,10 +139,10 @@ void train(struct bclassifier *b, char filename[])
     double *stats = b->stats;
 
     int start;
+    int g, v;
+    for (g = 0; g < ngroups; g++) {
 
-    for (int g = 0; g < ngroups; g++) {
-
-        for (int v = 0; v < nvars; v++) {
+        for (v = 0; v < nvars; v++) {
             
             start = g*nvars*nsamples + v*nsamples;
 
@@ -168,10 +170,11 @@ int classify(struct bclassifier *b, double input[])
     int nvars = b->nvars;
     int ngroups = b->ngroups;
 
-    for (int g = 0; g < ngroups; g++) {
+    int g, v;
+    for (g = 0; g < ngroups; g++) {
         cp = probexisting[g];
-
-        for (int v = 0; v < nvars; v++) {
+        
+        for (v = 0; v < nvars; v++) {
             start = g*nvars*2 + v*2;
             cp = cp*getprob(stats[start], stats[start + 1], input[v]);
         }
