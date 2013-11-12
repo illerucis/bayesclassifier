@@ -1,14 +1,16 @@
 #ifndef CLASSIFIER_H_INCLUDED
 #define CLASSIFIER_H_INCLUDED
 
-struct bclassifier {
-    double *tdata;
-    double *stats;
-    double *probexisting;
+struct class {
+    struct rarray **tdata;
+    double **stats;
+    double prob;
+};
 
-    int ngroups;
+struct bclassifier {
+    struct hashtable *classes;
+    char **classnames;
     int nvars;
-    int nsamples;
 };
 
 struct bclassifier *getclassifier();

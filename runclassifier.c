@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "classifier.h"
+#include "datastructures.h"
 
 int main() 
 {    
@@ -8,7 +9,6 @@ int main()
     struct bclassifier *b;
     b = getclassifier();
     train(b, "iris.csv");
-
     double test[30][4] = {
         {5.1,3.5,1.4,0.2},
         {4.9,3.0,1.4,0.2},
@@ -41,12 +41,12 @@ int main()
         {6.7,2.5,5.8,1.8},
         {7.2,3.6,6.1,2.5}
     };
-    int i;
-    for (i = 0; i < 30; i++)
-        printf("%d\n", classify(b, test[i]));
-
-    destroyclassifier(b);
     
+    for (int i = 0; i < 30; i++) {
+        int c = classify(b, test[i]);
+        if ( ( i / 10 ) != c) 
+            printf("Missed. Got %d. Expected %d\n", c, (i / 10));
+    }
     return 1;
 }
 

@@ -2,188 +2,176 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "datastructures.h"
 
-#define _USE_MATH_DEFINES
+const double PI = 3.14159265358979323846;
 
-struct bclassifier {
-
-    double *tdata;
-    double *stats;
-    double *probexisting;
-
-    int ngroups;
-    int nvars;
-    int nsamples;
-
+struct class {
+    struct rarray **tdata;
+    double **stats;
+    double prob;
 };
 
-void buildinfrastructure(struct bclassifier *b, int ngroups, 
-                         int nvars, int nsamples)
+struct bclassifier {
+    struct hashtable *classes;
+    char **classnames;
+    int nvars;
+};
+
+int getnumvars(char line[])
 {
-
-    double *tdata; double *stats; double *probexisting;
-
-    b->ngroups = ngroups;
-    b->nvars = nvars;
-    b->nsamples = nsamples;
-            
-    probexisting = malloc(ngroups*sizeof(double));
-    tdata = malloc(ngroups*nvars*nsamples*(sizeof(double)));
-    stats = malloc(ngroups*nsamples*2*(sizeof(double)));
-
-    b->probexisting = probexisting;
-    b->tdata = tdata;
-    b->stats = stats;
-
+    int i = 0; int vars = 0;
+    while (line[i] != '\0') {
+        if (line[i] == ',') 
+            vars++; 
+        i++;
+    }
+    return vars;
 }
 
-void buildgroups(struct bclassifier *b, char filename[])
+void installrarrays(struct hashtable *t, char *key, int vars)
 {
+    struct rarray **s = (struct rarray **) malloc(vars*sizeof(struct rarray *));
+    struct class *c = malloc(sizeof(struct class));
 
-    int ngroups, nvars, nsamples, cgroup, csamp, ti, i;
-    char line[256]; 
-    int *csamps;
+    for (int i = 0; i < vars; i++)
+        s[i] = getrarray();
+    
+    c->tdata = s;
+    c->prob = 1;
 
-    int linen = 0, coln = 0;
-    double *tdata = NULL, *stats= NULL, *probexisting = NULL;
+    install(t, key, c);
+}
 
-    char *pch = NULL;
-    FILE *fp = NULL;
-
+void getdatafromfile(struct bclassifier *b, char filename[])
+{
+    FILE *fp = NULL; 
+    char *key = NULL;
+    
+    char line[256];
     fp = fopen(filename, "r");
-    while (fgets(line, sizeof(line), fp)) {
 
-        pch = strtok(line, ",");
+    // first line to find the number of variables passed in
+    fgets(line, 256, fp);
+    b->nvars = getnumvars(line);
+
+    int cvar = 0; int totsamples = 0;
+    struct hashtable *t = newhashtable();
+
+    while (1) {
+        char *pch = strtok(line, ",");
         while (pch != NULL) {
-
-            if (linen == 0) {
-                if (coln == 0) ngroups = atoi(pch);
-                else if (coln == 1) nvars = atoi(pch);
-                else nsamples = atoi(pch);
-            }
-            else {
-                if (coln == 0) cgroup = atoi(pch);
-                else if (coln == nvars + 1) probexisting[cgroup] = atof(pch);
+            if (cvar == 0) {
+                key = pch;
+                if (lookup(t, key) == NULL) 
+                    installrarrays(t, key, b->nvars);
                 else {
-                    ti = cgroup*nvars*nsamples + (coln - 1)*nsamples + csamps[cgroup];
-                    tdata[ti] = atof(pch);
+                    struct class *c = (struct class *) lookup(t, key);
+                    c->prob += 1;
                 }
             }
-            coln++;
-            pch = strtok(NULL, ",");
+            else {
+                struct class *c = (struct class *) lookup(t, key);
+                struct rarray *s = c->tdata[cvar - 1];
+                rarray_push(s, atof(pch));
+            }            
+            pch = strtok(NULL, ","); 
+            cvar++;
         }
-
-        if (linen == 0) {
-            csamps = malloc(ngroups*sizeof(int));
-            for (i = 0; i < ngroups; i++) csamps[i] = 0;
-
-            buildinfrastructure(b, ngroups, nvars, nsamples);
-            tdata = b->tdata;
-            probexisting = b->probexisting;
-        }
-        else csamps[cgroup] = csamps[cgroup] + 1;
-
-        coln = 0;
-        linen++;
+        cvar = 0; 
+        totsamples++;
+        if (fgets(line, 80, fp) == NULL) break;
     }
-    free (csamps);
+
+    b->classnames = keys(t);
+    b->classes = t;
+
+    for (int i = 0; i < b->classes->numkeys; i++) {
+        struct class *c = (struct class *) lookup(t, b->classnames[i]);
+        c->prob = (c->prob) / totsamples;
+    }
+
 }
 
 struct bclassifier *getclassifier()
 {
     struct bclassifier *b = malloc(sizeof(struct bclassifier));
+    b->classes = newhashtable();
     return b;
 }
 
 void destroyclassifier(struct bclassifier *b)
 {
-    free (b->tdata);
-    free (b->stats);
-    free (b->probexisting);
     free (b);
 }
 
-double getmean(double stats[], int start, int nsamples)
+double getmean(double stats[], int nsamples)
 {
     double sum = 0.0;
-    int i;
-    for (i = start; i < start + nsamples; i++)
+    for (int i = 0; i < nsamples; i++)
         sum += stats[i];
     return sum / nsamples;
 }
 
-double getvariance(double stats[], int start, int nsamples)
+double getvariance(double stats[], int nsamples)
 {
     double var = 0.0;
-    double mean = getmean(stats, start, nsamples);
-    int i;
-    for (i = start; i < start + nsamples; i++) 
+    double mean = getmean(stats, nsamples);
+    for (int i = 0; i < nsamples; i++) 
         var += (stats[i] - mean) * (stats[i] - mean);
     return ( 1 / ( nsamples - 1.0 ) ) * var; 
 }
 
 double getprob(double mean, double var, double val)
 {
-    double a = 1 / (sqrt(2*M_PI*var));
+    double a = 1 / (sqrt(2*PI*var));
     double b = ( - (val - mean)*(val - mean) / (2*var) );
     return a*exp(b);
 }
 
 void train(struct bclassifier *b, char filename[])
 {
-    buildgroups(b, filename);
+    getdatafromfile(b, filename);
 
-    int ngroups = b->ngroups;
-    int nvars = b->nvars;
-    int nsamples = b->nsamples;
+    struct hashtable *t = b->classes;
+    char **classnames = b->classnames;
 
-    double *tdata = b->tdata;
-    double *stats = b->stats;
+    for (int k = 0; k < t->numkeys; k++) {
+        struct class *c = (struct class *) lookup(t, classnames[k]);
+        double **stats = malloc(b->nvars*sizeof(double *));
 
-    int start;
-    int g, v;
-    for (g = 0; g < ngroups; g++) {
+        for (int v = 0; v < b->nvars; v++) {
+            struct rarray *tdata = c->tdata[v];
+            double *ms = malloc(2*sizeof(double));
 
-        for (v = 0; v < nvars; v++) {
+            ms[0] = getmean(tdata->v, tdata->size);
+            ms[1] = getvariance(tdata->v, tdata->size);
+            stats[v] = ms;
             
-            start = g*nvars*nsamples + v*nsamples;
-
-            double mean = getmean(tdata, start, nsamples);
-            double var = getvariance(tdata, start, nsamples);
-
-            stats[g*nvars*2 + v*2] = mean; 
-            stats[g*nvars*2 + v*2 + 1] = var; 
-
         }
+        c->stats = stats;
     }
-    b->stats = stats;
 }
 
 int classify(struct bclassifier *b, double input[])
 {
 
-    double cp, prob; int start;
-
+    double cp, prob;
     double cpmax = 0.0; int gmax = -1; 
 
-    double *stats = b->stats;
-    double *probexisting = b->probexisting;
+    for (int g = 0; g < b->classes->numkeys; g++) {
 
-    int nvars = b->nvars;
-    int ngroups = b->ngroups;
-    int g, v;
-    for (g = 0; g < ngroups; g++) {
-        cp = probexisting[g];
+        struct class *c = (struct class *) lookup(b->classes, b->classnames[g]);
+        cp = c->prob;
 
-        for (v = 0; v < nvars; v++) {
-            start = g*nvars*2 + v*2;
-            cp = cp*getprob(stats[start], stats[start + 1], input[v]);
-        }
+        for (int v = 0; v < b->nvars; v++)
+            cp = cp * getprob(c->stats[v][0], c->stats[v][1], input[v]);
 
         if (cp > cpmax) {
-            cpmax = cp; 
+            cpmax = cp;
             gmax = g;
         }
     }
+
     return gmax;
 }
