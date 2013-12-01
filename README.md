@@ -19,7 +19,7 @@ destroyclassifier(b);
 
 ```
 
-The training data compiles by a certain format, shown by the Iris flower data set
+The training data compiles by a certain format, shown by the [Iris flower data set](http://en.wikipedia.org/wiki/Iris_flower_data_set)
 
 ```
 species_group_number, sepal_length, sepal_width, petal_length, petal_width
