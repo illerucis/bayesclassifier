@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+// ------------ Hash Table ------------ // 
+
 #define HASHSIZE 101
 
 struct hashtable {
@@ -9,7 +11,6 @@ struct hashtable {
     int numkeys;
 };
 
-// nodes stored in the hashtab array
 struct nlist {
     struct nlist *next;
     char *key;
@@ -30,7 +31,6 @@ char **keys(struct hashtable *t)
     return k;
 }
 
-// primitive hashing function
 unsigned hash(char *s)
 {
     unsigned hashval;
@@ -51,7 +51,6 @@ void destroyhashtable(struct hashtable *t)
     free(t);
 }
 
-// finds the nlist node in the hashtable
 void *lookup(struct hashtable *t, char *s)
 {
 
@@ -62,7 +61,6 @@ void *lookup(struct hashtable *t, char *s)
     return NULL;
 }
 
-// finds the nlist node in the hashtable
 void *nlistlookup(struct hashtable *t, char *s)
 {
     struct nlist *np;
@@ -107,58 +105,7 @@ struct nlist *install(struct hashtable *t, char *ikey, void *ival)
 
 }
 
-struct stack {
-    int N;
-    struct node {
-        void *val;
-        struct node *next;
-    } *head;
-};
-
-int size(struct stack *s) { return s->N; }
-
-int isempty(struct stack *s) { return s->N == 0; }
-
-void push(struct stack *s, void *val)
-{
-    struct node *newnode = malloc(sizeof(struct node));
-    newnode->val = val;
-    newnode->next = s->head;
-    s->head = newnode;
-    int N = s->N;
-    N++;
-    s->N = N;
-}
-
-void *pop(struct stack *s)
-{
-    struct node *n = s->head;
-    s->head = s->head->next;
-    int N = s->N;
-    N--;
-    s->N = N;
-    return n->val;
-}
-
-void *peek(struct stack *s)
-{
-    return s->head->val;
-}
-
-struct stack *newstack() 
-{
-    struct stack *s = malloc(sizeof(struct stack));
-    s->N = 0;
-    return s;
-}
-
-void destroystack(struct stack *s)
-{
-    free(s);
-}
-
-
-// resizing array
+// ---------- Resizing Array --------- // 
 
 struct rarray {
     double *v;
@@ -168,7 +115,6 @@ struct rarray {
 
 struct rarray *getrarray() 
 {
-
     int INITIAL_LENGTH = 2;
 
     struct rarray *ra = malloc(sizeof(struct rarray *));
@@ -200,7 +146,6 @@ void resize(struct rarray *ra, int newlength)
     free(ra->v);
     ra->length = newlength;
     ra->v = nv;
-
 }
 
 void rarray_push(struct rarray *ra, double value)
@@ -208,7 +153,6 @@ void rarray_push(struct rarray *ra, double value)
     if (ra->size == ( ra->length / 2 )) {
         resize(ra, 2*ra->length);
     }
-
     ra->v[ra->size] = value;
     ra->size = ra->size + 1;
 }
